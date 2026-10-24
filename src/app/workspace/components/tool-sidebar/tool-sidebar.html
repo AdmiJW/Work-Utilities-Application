@@ -1,0 +1,56 @@
+<aside class="sidebar" [class.is-collapsed]="collapsed()">
+  <div class="brand">
+    <div class="brand-mark"><ng-icon name="lucideCommand" size="21" /></div>
+    @if (!collapsed()) {
+      <div>
+        <strong>Work<span>Utilities</span></strong>
+      </div>
+    }
+  </div>
+  <div class="nav-section-label">
+    @if (!collapsed()) {
+      <ng-icon name="lucideWrench" size="12" /><span class="eyebrow">Tools</span>
+    }
+  </div>
+  <nav aria-label="Tools">
+    @for (tool of tools(); track tool.id) {
+      <button
+        class="tool-link"
+        [class.active]="activeTool() === tool.id"
+        [title]="'New ' + tool.title + ' session'"
+        [attr.aria-label]="'New ' + tool.title + ' session'"
+        (click)="createSession.emit(tool.id)"
+      >
+        <span class="nav-icon"><ng-icon [name]="tool.icon" size="19" /></span>
+        @if (!collapsed()) {
+          <span class="tool-label"
+            ><strong>{{ tool.id === 'output-analyzer' ? 'Output Analyzer' : tool.title }}</strong
+            ><small>{{ tool.description }}</small></span
+          ><ng-icon class="add-icon" name="lucidePlus" size="14" />
+        }
+      </button>
+    }
+  </nav>
+  <div class="sidebar-spacer"></div>
+  <button
+    class="library-link"
+    [title]="'Session library (' + savedCount() + ')'"
+    aria-label="Open session library"
+    (click)="openLibrary.emit()"
+  >
+    <ng-icon name="lucideFolderOpen" size="18" />
+    @if (!collapsed()) {
+      <span>Session library</span><span class="count">{{ savedCount() }}</span>
+    }
+  </button>
+  <div class="sidebar-bottom">
+    <button
+      class="icon-button"
+      [attr.aria-label]="collapsed() ? 'Expand sidebar' : 'Collapse sidebar'"
+      [title]="collapsed() ? 'Expand sidebar' : 'Collapse sidebar'"
+      (click)="toggleCollapsed.emit()"
+    >
+      <ng-icon [name]="collapsed() ? 'lucidePanelLeftOpen' : 'lucidePanelLeftClose'" size="17" />
+    </button>
+  </div>
+</aside>

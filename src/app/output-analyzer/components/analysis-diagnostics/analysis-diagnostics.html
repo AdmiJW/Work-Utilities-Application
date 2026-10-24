@@ -1,0 +1,45 @@
+@if (mode() === 'diagnostics') {
+  <h2>Analysis diagnostics</h2>
+  <p class="intro">
+    These items could not be mapped confidently. Their original text is preserved here and in the
+    workbook’s Diagnostics sheet. Valid rows remain available.
+  </p>
+  @for (item of diagnostics(); track $index) {
+    <details>
+      <summary>
+        <span class="location"
+          >{{
+            item.statementIndex ? 'Statement ' + item.statementIndex : 'Before first statement'
+          }}
+          · {{ item.lineNumber ? 'Source line ' + item.lineNumber : 'Statement summary' }}</span
+        >{{ item.message }}
+      </summary>
+      <pre class="mono">{{ item.raw }}</pre>
+    </details>
+  }
+} @else {
+  <h2>Statement summaries</h2>
+  <p class="intro">
+    Non-SELECT statements are kept as summaries, including their reported affected-row counts and
+    messages.
+  </p>
+  @for (statement of statements(); track statement.index) {
+    @if (statement.kind !== 'SELECT') {
+      <div class="statement-card">
+        <div class="card-heading">
+          <strong>{{ statement.index }}. {{ statement.kind }}</strong
+          ><span class="muted">Run {{ statement.marker || '—' }}</span
+          ><span class="count">{{
+            statement.reportedRows === null
+              ? 'Count not reported'
+              : statement.reportedRows + ' rows affected'
+          }}</span>
+        </div>
+        <pre class="mono">{{ statement.sql }}</pre>
+        @if (statement.messages.length) {
+          <pre class="mono">{{ statement.messages.join('\n') }}</pre>
+        }
+      </div>
+    }
+  }
+}

@@ -1,0 +1,62 @@
+<div class="welcome">
+  <div class="welcome-content">
+    <div class="workspace-label"><span></span>Your local workspace</div>
+    <h1>A little less repetitive.<br /><span>A lot more readable.</span></h1>
+    <p class="intro">
+      A focused place to prepare SQL and make sense of execution output.<br class="wide-break" />
+      Choose a tool to start a new session.
+    </p>
+    <div class="tool-cards">
+      @for (tool of tools(); track tool.id) {
+        <button class="tool-card" (click)="createSession.emit(tool.id)">
+          <div class="card-top">
+            <span class="card-icon" [class.analyzer]="tool.id === 'output-analyzer'"
+              ><ng-icon [name]="tool.icon" size="23" /></span
+            ><ng-icon class="card-arrow" name="lucideArrowUpRight" size="19" />
+          </div>
+          <h2>{{ tool.id === 'output-analyzer' ? 'Output Analyzer' : tool.title }}</h2>
+          <p>
+            {{
+              tool.id === 'sql-formatter'
+                ? 'Write comfortably. Prettify, compact, and export your SQL with a full code editor.'
+                : 'Turn DER/DPR logs into readable sheets. Inspect JSON and export the complete results.'
+            }}
+          </p>
+          @if (tool.id === 'sql-formatter') {
+            <div class="preview code-preview mono" aria-hidden="true">
+              <span><b>SELECT</b> CustomerId, Email</span><span><b>FROM</b> Customer</span
+              ><span><b>WHERE</b> AccountStatus = <i>'ACTIVE'</i>;</span>
+            </div>
+          } @else {
+            <div class="preview table-preview mono" aria-hidden="true">
+              <div class="preview-row table-head">
+                <span>EventId</span><span>Status</span><span>Payload</span>
+              </div>
+              <div class="preview-row">
+                <span>MSG-001</span><span class="success-text">Complete</span
+                ><span>{{ '{ ... }' }}</span>
+              </div>
+              <div class="preview-row">
+                <span>MSG-002</span><span class="success-text">Complete</span
+                ><span>{{ '{ ... }' }}</span>
+              </div>
+            </div>
+          }
+          <div class="card-bottom">Start a session <span>→</span></div>
+        </button>
+      }
+    </div>
+    <div class="welcome-features">
+      <div>
+        <ng-icon name="lucideHardDrive" size="16" /><span>Automatically saved locally</span>
+      </div>
+      <div>
+        <ng-icon name="lucideWifiOff" size="16" /><span>Available offline after caching</span>
+      </div>
+      <div><ng-icon name="lucideLayers" size="16" /><span>Multiple independent sessions</span></div>
+    </div>
+    <p class="welcome-tip">
+      Make it yours: double-click a tab to rename it. Closed sessions stay in your library.
+    </p>
+  </div>
+</div>

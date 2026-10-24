@@ -1,0 +1,13 @@
+node_modules
+dist
+.angular
+coverage
+src/generated
+artifacts
+playwright-report
+test-results
+*.txt
+*.sql
+sql_output_format.md
+package-lock.json
+.env*

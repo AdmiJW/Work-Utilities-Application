@@ -1,0 +1,108 @@
+<header class="inspector-header">
+  <div>
+    <span class="eyebrow">Cell inspector</span>
+    <h3>{{ cell().columnName }}</h3>
+    <p>
+      Source line {{ cell().rowNumber }} · {{ cell().value.length.toLocaleString() }} characters
+    </p>
+  </div>
+  <button class="icon-button" aria-label="Close cell inspector" (click)="closed.emit()">
+    <ng-icon name="lucideX" size="16" />
+  </button>
+</header>
+<div class="raw-heading">
+  <button
+    class="raw-toggle eyebrow"
+    [attr.aria-expanded]="rawExpanded()"
+    aria-controls="raw-cell-value"
+    (click)="rawExpanded.set(!rawExpanded())"
+  >
+    {{ rawExpanded() ? '−' : '+' }} Exact raw value
+  </button>
+  <button class="copy-button" (click)="copy(cell().value)">
+    <ng-icon name="lucideCopy" size="13" />Copy raw
+  </button>
+</div>
+@if (rawExpanded()) {
+  <textarea
+    id="raw-cell-value"
+    class="raw-value mono"
+    aria-label="Raw cell value"
+    wrap="off"
+    readonly
+    spellcheck="false"
+    [value]="cell().value"
+  ></textarea>
+}
+@if (copyStatus()) {
+  <p class="copy-status" role="status">{{ copyStatus() }}</p>
+}
+<div class="json-section">
+  <div class="decode-controls" role="group" aria-label="JSON decoding mode">
+    <button
+      [attr.aria-pressed]="decodeMode() === 'shallow'"
+      (click)="decodeModeChange.emit('shallow')"
+      title="Inspect the outer JSON; decode nested strings individually"
+    >
+      Shallow
+    </button>
+    <button
+      [attr.aria-pressed]="decodeMode() === 'deep'"
+      (click)="decodeModeChange.emit('deep')"
+      title="Recursively decode serialized objects and arrays throughout this cell"
+    >
+      Deep
+    </button>
+  </div>
+  @if (notice()) {
+    <p class="inspection-hint" role="status">{{ notice() }}</p>
+  }
+  <div class="json-heading">
+    <span><ng-icon name="lucideBraces" size="15" />JSON inspection</span>
+    @if (inspection()?.valid) {
+      <div class="view-toggle">
+        <button [class.active]="mode() === 'tree'" (click)="mode.set('tree')">Tree</button
+        ><button [class.active]="mode() === 'pretty'" (click)="mode.set('pretty')">Pretty</button>
+      </div>
+    }
+  </div>
+  @if (lens().length) {
+    <div class="nested-breadcrumb">
+      <button (click)="back()"><ng-icon name="lucideArrowLeft" size="12" />Back</button
+      ><span>Decoded string · depth {{ lens().length }}</span>
+    </div>
+  }
+  @if (inspecting()) {
+    <p class="inspection-hint" role="status">Inspecting JSON…</p>
+  } @else if (inspection(); as value) {
+    @if (value.valid && value.root) {
+      @if (mode() === 'tree') {
+        <div class="tree-body">
+          <app-json-tree
+            [node]="value.root"
+            [source]="viewSource()"
+            (inspectNested)="inspectNested($event)"
+          />
+        </div>
+      } @else {
+        <div class="pretty-controls">
+          <button class="copy-button" (click)="copy(value.pretty)">
+            <ng-icon name="lucideCopy" size="12" />Copy JSON
+          </button>
+        </div>
+        <textarea
+          class="pretty-value mono"
+          aria-label="Prettified JSON"
+          wrap="off"
+          readonly
+          spellcheck="false"
+          [value]="value.pretty"
+        ></textarea>
+      }
+    } @else {
+      <p class="inspection-hint">
+        This cell is plain text or is not valid JSON. Its raw value is shown above.
+      </p>
+    }
+  }
+</div>

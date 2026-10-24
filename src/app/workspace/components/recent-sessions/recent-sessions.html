@@ -1,0 +1,62 @@
+<div class="recent-home">
+  <div class="recent-content">
+    <header class="recent-header">
+      <div>
+        <span class="eyebrow"><ng-icon name="lucideHistory" size="14" />Your workspace</span>
+        <h1>Recent sessions</h1>
+        <p>Pick up where you left off.</p>
+      </div>
+      <button class="library-action" (click)="openLibrary.emit()">
+        <ng-icon name="lucideFolderOpen" size="16" />Session Library
+      </button>
+    </header>
+    <div class="new-actions" role="group" aria-label="Start a new session">
+      @for (tool of tools(); track tool.id) {
+        <button (click)="createSession.emit(tool.id)">
+          <ng-icon [name]="tool.icon" size="15" /><span>New {{ toolTitle(tool.id) }}</span
+          ><ng-icon name="lucidePlus" size="14" />
+        </button>
+      }
+    </div>
+    @if (error()) {
+      <p class="reopen-error" role="alert">
+        Could not reopen the session. {{ error() }} Select it again to retry.
+      </p>
+    }
+    <ul class="recent-list" aria-label="Recently viewed sessions">
+      @for (session of visibleSessions(); track session.id) {
+        <li>
+          <button
+            class="recent-session"
+            [attr.aria-label]="'Reopen ' + session.name"
+            [disabled]="openingId() !== null"
+            [attr.aria-busy]="openingId() === session.id"
+            (click)="reopen.emit(session.id)"
+          >
+            <span class="session-icon" [class.analyzer]="session.toolId === 'output-analyzer'"
+              ><ng-icon
+                [name]="
+                  session.toolId === 'sql-formatter' ? 'lucideCodeXml' : 'lucideTableProperties'
+                "
+                size="18"
+            /></span>
+            <span class="session-details"
+              ><strong [title]="session.name">{{ session.name }}</strong
+              ><small>{{
+                openingId() === session.id ? 'Opening…' : toolTitle(session.toolId)
+              }}</small></span
+            >
+            <span class="session-time"
+              >{{ session.lastViewedAt === undefined ? 'Updated' : 'Viewed' }}
+              {{ timestamp(session) | date: 'MMM d, y, h:mm a' }}</span
+            >
+            <ng-icon
+              [name]="openingId() === session.id ? 'lucideLoaderCircle' : 'lucideArrowUpRight'"
+              size="15"
+            />
+          </button>
+        </li>
+      }
+    </ul>
+  </div>
+</div>

@@ -1,0 +1,151 @@
+:host {
+  display: block;
+  height: 100dvh;
+  min-height: 400px;
+}
+.workspace {
+  display: grid;
+  grid-template-columns: 224px minmax(0, 1fr);
+  height: 100%;
+  overflow: hidden;
+}
+.workspace.sidebar-collapsed {
+  grid-template-columns: 62px minmax(0, 1fr);
+}
+.main-workspace {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.workspace-header {
+  height: 57px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 22px;
+  gap: 14px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+}
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 11px;
+  color: var(--muted);
+  min-width: 0;
+}
+.breadcrumb strong {
+  font-weight: 550;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.header-status {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+.save-status,
+.connectivity {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+}
+.save-status ng-icon {
+  color: #1ba47d;
+}
+.save-status.failed {
+  color: #db445d;
+}
+.status-divider {
+  height: 15px;
+  width: 1px;
+  background: var(--border);
+}
+.tool-panel {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+.workspace-footer {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  height: 28px;
+  flex-shrink: 0;
+  background: var(--panel);
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  padding: 0 17px;
+  font-size: 9px;
+  letter-spacing: 0.01em;
+}
+.footer-spacer {
+  flex: 1;
+}
+.footer-divider {
+  opacity: 0.4;
+  margin: 0 4px;
+}
+.version {
+  font-size: 8px;
+  border: 1px solid var(--border);
+  padding: 1px 4px;
+  border-radius: 3px;
+  margin-left: 3px;
+}
+.window-message {
+  height: 100%;
+  min-height: 300px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  text-align: center;
+  padding: 32px;
+  color: var(--muted);
+}
+.window-message h1 {
+  color: var(--text);
+  font-size: 22px;
+}
+.window-message p {
+  font-size: 13px;
+  line-height: 1.7;
+}
+.retry-save,
+.update-banner button {
+  margin-left: 12px;
+  text-decoration: underline;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  font-size: inherit;
+}
+@media (max-width: 1100px) {
+  .workspace {
+    grid-template-columns: 190px minmax(0, 1fr);
+  }
+  .workspace-header {
+    padding: 0 16px;
+  }
+}
+@media (max-width: 760px) {
+  .workspace {
+    grid-template-columns: 62px minmax(0, 1fr);
+  }
+  .save-status {
+    display: none;
+  }
+  .connectivity {
+    font-size: 9px;
+  }
+}

@@ -1,0 +1,113 @@
+:host {
+  display: block;
+  flex-shrink: 0;
+}
+.tab-strip {
+  display: flex;
+  height: 43px;
+  padding-left: 12px;
+  background: var(--app-bg);
+  border-bottom: 1px solid var(--border);
+}
+.tab-list {
+  display: flex;
+  align-items: stretch;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  flex: 1;
+  scrollbar-width: thin;
+}
+.session-tab {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  position: relative;
+  min-width: 150px;
+  max-width: 245px;
+  margin-top: 6px;
+  border: 1px solid transparent;
+  border-bottom: 0;
+  border-radius: 6px 6px 0 0;
+  color: var(--muted);
+}
+.session-tab.selected {
+  background: var(--panel);
+  border-color: var(--border);
+  color: var(--text);
+}
+.session-tab.selected::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  height: 2px;
+  background: var(--accent);
+  left: 12px;
+  right: 12px;
+  border-radius: 2px;
+}
+.tab-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 4px 10px 13px;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-size: 11px;
+  flex: 1;
+}
+.tab-button span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.selected .tab-button ng-icon {
+  color: var(--accent);
+}
+.close-tab {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  margin: 0 6px;
+  background: transparent;
+  border: 0;
+  color: var(--muted);
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+.close-tab:hover {
+  background: var(--app-bg);
+  color: var(--text);
+}
+.session-tab.cdk-drag-preview {
+  height: 36px;
+  margin: 0;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  box-shadow: var(--app-shadow);
+}
+.cdk-drag-placeholder {
+  opacity: 0.3;
+}
+.cdk-drag-animating,
+.cdk-drop-list-dragging .session-tab:not(.cdk-drag-placeholder) {
+  transition: transform 140ms ease;
+}
+.tab-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+input {
+  width: 145px;
+  margin-left: 8px;
+  padding: 3px 5px;
+  color: var(--text);
+  background: var(--panel);
+  border: 1px solid var(--accent);
+  border-radius: 3px;
+  font-size: 12px;
+}

@@ -1,0 +1,74 @@
+<div class="tab-strip">
+  <div
+    class="tab-list"
+    role="tablist"
+    aria-label="Tool sessions"
+    cdkScrollable
+    cdkDropList
+    cdkDropListOrientation="horizontal"
+    cdkDropListLockAxis="x"
+    [cdkDropListData]="sessions()"
+    (cdkDropListDropped)="drop($event)"
+  >
+    @for (session of sessions(); track session.id) {
+      <div
+        class="session-tab"
+        [class.selected]="session.id === activeId()"
+        cdkDrag
+        cdkDragLockAxis="x"
+        [cdkDragDisabled]="renamingId() !== null"
+        (cdkDragStarted)="dragging.set(true)"
+        (cdkDragEnded)="dragging.set(false)"
+        (contextmenu)="openMenu($event, session)"
+      >
+        @if (renamingId() === session.id) {
+          <input
+            id="session-name-input"
+            aria-label="Session name"
+            [value]="draftName()"
+            (input)="draftName.set($any($event.target).value)"
+            (blur)="finishRename()"
+            (keydown.enter)="finishRename()"
+            (keydown.escape)="renamingId.set(null)"
+          />
+        } @else {
+          <button
+            class="tab-button"
+            cdkDragHandle
+            role="tab"
+            [id]="'tab-' + session.id"
+            [attr.aria-selected]="session.id === activeId()"
+            aria-controls="tool-panel"
+            [attr.tabindex]="session.id === activeId() ? 0 : -1"
+            [title]="session.name + ' · Double-click or press F2 to rename'"
+            (click)="select(session.id)"
+            (dblclick)="rename(session)"
+            (keydown)="onKey($event, session)"
+          >
+            <ng-icon
+              [name]="
+                session.toolId === 'sql-formatter' ? 'lucideCodeXml' : 'lucideTableProperties'
+              "
+              size="14"
+            /><span>{{ session.name }}</span>
+          </button>
+        }
+        <button
+          class="close-tab"
+          [attr.aria-label]="'Close ' + session.name"
+          [title]="'Close ' + session.name + ' (saved in library)'"
+          (click)="closeSession.emit(session.id)"
+        >
+          <ng-icon name="lucideX" size="12" />
+        </button>
+      </div>
+    }
+  </div>
+</div>
+<p-contextmenu #tabMenu [model]="menuItems()" appendTo="body">
+  <ng-template #item let-item>
+    <a class="p-contextmenu-item-link tab-menu-item">
+      <ng-icon [name]="item.icon" size="15" /><span>{{ item.label }}</span>
+    </a>
+  </ng-template>
+</p-contextmenu>

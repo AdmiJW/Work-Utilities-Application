@@ -1,0 +1,67 @@
+<header class="tool-toolbar">
+  <div class="tool-heading">
+    <span class="tool-emblem"><ng-icon name="lucideCodeXml" size="18" /></span>
+    <div>
+      <h1 [title]="name()">{{ name() }}</h1>
+    </div>
+  </div>
+  <div class="toolbar-actions">
+    <input #sqlFile type="file" accept=".sql,text/plain" hidden (change)="importFiles($event)" />
+    <p-button
+      size="small"
+      severity="secondary"
+      [outlined]="true"
+      [disabled]="fileImport.reading()"
+      (onClick)="openPicker(sqlFile)"
+      ><ng-icon name="lucideFileUp" />Open SQL</p-button
+    >
+    <span class="toolbar-divider"></span>
+    <button
+      class="wrap-toggle"
+      [attr.aria-pressed]="wordWrap()"
+      (click)="toggleWrap()"
+      title="Toggle word wrap"
+    >
+      <ng-icon name="lucideWrapText" size="15" />Word Wrap
+    </button>
+    <p-button
+      size="small"
+      severity="secondary"
+      [outlined]="true"
+      [disabled]="!source().trim()"
+      (onClick)="format('pretty')"
+      ><ng-icon name="lucideAlignLeft" />Prettify</p-button
+    >
+    <p-button
+      size="small"
+      severity="secondary"
+      [outlined]="true"
+      [disabled]="!source().trim()"
+      (onClick)="format('compact')"
+      ><ng-icon name="lucideMinimize2" />One-line</p-button
+    >
+    <p-button size="small" [disabled]="!source()" (onClick)="export()"
+      ><ng-icon name="lucideDownload" />Export SQL</p-button
+    >
+  </div>
+</header>
+@if (error()) {
+  <div class="notice error" role="alert">{{ error() }}</div>
+}
+<div class="editor-area" appFileDrop (filesDropped)="openFiles($event)">
+  <app-sql-editor
+    [sessionId]="sessionId()"
+    [source]="source()"
+    [dark]="appearance.isDark()"
+    [savedView]="editorView()"
+    [wordWrap]="wordWrap()"
+    (sourceChange)="sessions.updateSource(sessionId(), $event)"
+    (viewChanged)="sessions.updateOptions(sessionId(), { editorView: $event })"
+  />
+</div>
+<app-file-import-dialog
+  [fileName]="fileImport.pending()?.fileName ?? null"
+  [error]="fileImport.error()"
+  (decision)="decideImport($event)"
+  (dismissError)="fileImport.error.set('')"
+/>

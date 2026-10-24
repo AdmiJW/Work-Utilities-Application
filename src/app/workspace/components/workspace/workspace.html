@@ -1,0 +1,186 @@
+@if (lock.state() === 'other') {
+  <div class="window-message">
+    <ng-icon name="lucideLockKeyhole" size="36" />
+    <h1>Your workspace is open in another window</h1>
+    <p>Close that window, then retry here. This keeps your autosaved sessions consistent.</p>
+    <p-button (onClick)="initialize()">Retry</p-button>
+  </div>
+} @else if (!sessions.ready()) {
+  <div class="window-message" role="status">
+    <ng-icon name="lucideLoaderCircle" size="28" />
+    <p>Opening your workspace…</p>
+  </div>
+} @else {
+  <div
+    class="workspace"
+    [class.sidebar-collapsed]="collapsed()"
+    [attr.inert]="sessions.busy() ? '' : null"
+    [attr.aria-busy]="sessions.busy()"
+  >
+    <app-tool-sidebar
+      [tools]="tools"
+      [activeTool]="activeTool()?.id ?? null"
+      [collapsed]="collapsed()"
+      [savedCount]="sessions.summaries().length"
+      (createSession)="create($event)"
+      (openLibrary)="libraryOpen.set(true)"
+      (toggleCollapsed)="toggleSidebar()"
+    />
+    <main class="main-workspace">
+      <header class="workspace-header">
+        <div class="breadcrumb">
+          <ng-icon name="lucidePanelsTopLeft" size="16" /><span>Workspace</span>
+          @if (sessions.activeSession()) {
+            <ng-icon name="lucideChevronRight" size="12" /><strong>{{
+              sessions.activeSession()?.name
+            }}</strong>
+          }
+        </div>
+        <div class="header-status">
+          <span
+            class="save-status"
+            [class.failed]="sessions.autosave.status() === 'error'"
+            role="status"
+            ><ng-icon
+              [name]="
+                sessions.autosave.status() === 'saved'
+                  ? 'lucideCheckCheck'
+                  : sessions.autosave.status() === 'saving'
+                    ? 'lucideLoaderCircle'
+                    : 'lucideCircleAlert'
+              "
+              size="13"
+            />{{
+              sessions.autosave.status() === 'saved'
+                ? 'All changes saved'
+                : sessions.autosave.status() === 'saving'
+                  ? 'Saving…'
+                  : 'Save failed'
+            }}</span
+          >
+          <span class="status-divider"></span
+          ><span
+            class="connectivity"
+            [title]="
+              offline.offlineReady()
+                ? 'Application assets are cached for offline use'
+                : 'Offline use becomes available after a production build is cached'
+            "
+            ><ng-icon [name]="offline.online() ? 'lucideWifi' : 'lucideWifiOff'" size="13" />{{
+              !offline.online() ? 'Offline' : offline.offlineReady() ? 'Offline ready' : 'Online'
+            }}</span
+          >
+          @if (offline.canInstall()) {
+            <button
+              class="icon-button"
+              aria-label="Install application"
+              title="Install application"
+              (click)="offline.install()"
+            >
+              <ng-icon name="lucideDownload" size="16" />
+            </button>
+          }
+          <button
+            class="icon-button"
+            [attr.aria-label]="
+              appearance.isDark() ? 'Switch to light theme' : 'Switch to dark theme'
+            "
+            [title]="appearance.isDark() ? 'Switch to light theme' : 'Switch to dark theme'"
+            (click)="appearance.toggle()"
+          >
+            <ng-icon [name]="appearance.isDark() ? 'lucideSun' : 'lucideMoon'" size="17" />
+          </button>
+        </div>
+      </header>
+      @if (sessions.error() || sessions.autosave.error()) {
+        <div class="notice error" role="alert">
+          {{ sessions.error() || sessions.autosave.error() }}
+          <button class="retry-save" (click)="sessions.autosave.flush()">Retry save</button>
+        </div>
+      }
+      @if (sessions.openingError() && sessions.activeId()) {
+        <div class="notice error" role="alert">
+          Could not open the session. {{ sessions.openingError() }}
+        </div>
+      }
+      @if (offline.updateReady()) {
+        <div class="notice update-banner">
+          A new version is ready.
+          <button (click)="offline.reloadForUpdate()">Save and reload</button>
+        </div>
+      }
+      @if (offline.message()) {
+        <div class="notice" role="status">{{ offline.message() }}</div>
+      }
+      @if (sessions.openSessions().length) {
+        @defer (when sessions.openSessions().length > 0) {
+          <app-session-tabs
+            [sessions]="sessions.openSessions()"
+            [activeId]="sessions.activeId()"
+            (activate)="sessions.activate($event)"
+            (closeSession)="sessions.close($event)"
+            (closeSessions)="sessions.closeMany($event)"
+            (reorderSessions)="sessions.reorder($event)"
+            (renameSession)="sessions.rename($event.id, $event.name)"
+          />
+        } @error {
+          <div class="notice error" role="alert">
+            Session tabs could not load. Reconnect and reload the application.
+          </div>
+        }
+      }
+      <section
+        id="tool-panel"
+        class="tool-panel"
+        [attr.role]="sessions.activeId() ? 'tabpanel' : null"
+        [attr.aria-labelledby]="sessions.activeId() ? 'tab-' + sessions.activeId() : null"
+      >
+        @if (loadingError()) {
+          <div class="window-message" role="alert">
+            <p>{{ loadingError() }}</p>
+          </div>
+        } @else if (activeViews().length) {
+          @for (view of activeViews(); track view.sessionId) {
+            <ng-container *ngComponentOutlet="view.component; inputs: toolInputs()" />
+          }
+        } @else if (sessions.activeId()) {
+          <div class="window-message" role="status">
+            <ng-icon name="lucideLoaderCircle" size="24" />
+            <p>Opening tool…</p>
+          </div>
+        } @else {
+          @if (sessions.summaries().length) {
+            <app-recent-sessions
+              [sessions]="sessions.recentSessions()"
+              [tools]="tools"
+              [openingId]="sessions.openingId()"
+              [error]="sessions.openingError()"
+              (createSession)="create($event)"
+              (reopen)="sessions.activate($event)"
+              (openLibrary)="libraryOpen.set(true)"
+            />
+          } @else {
+            <app-workspace-welcome [tools]="tools" (createSession)="create($event)" />
+          }
+        }
+      </section>
+      <footer class="workspace-footer">
+        <span class="footer-spacer"></span>
+        @if (sessions.activeId()) {
+          <span class="mono"
+            >{{ activeLines().toLocaleString() }} lines ·
+            {{ activeCharacters().toLocaleString() }} characters</span
+          ><span class="footer-divider">|</span>
+        }
+        <span>Work Utilities</span><span class="version mono">v1.0</span>
+      </footer>
+    </main>
+  </div>
+  @defer (when libraryOpen()) {
+    <app-session-library [visible]="libraryOpen()" (visibleChange)="libraryOpen.set($event)" />
+  } @error {
+    <div class="notice error" role="alert">
+      Session library could not load. Reconnect and reload the application.
+    </div>
+  }
+}

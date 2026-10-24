@@ -1,0 +1,44 @@
+<div class="tree-row" [style.padding-left.px]="depth() * 14">
+  @if (isContainer()) {
+    <button
+      class="tree-toggle"
+      [attr.aria-label]="(isExpanded() ? 'Collapse ' : 'Expand ') + node().label"
+      [attr.aria-expanded]="isExpanded()"
+      (click)="toggle()"
+    >
+      <ng-icon [name]="isExpanded() ? 'lucideChevronDown' : 'lucideChevronRight'" size="12" />
+    </button>
+  } @else {
+    <span class="tree-spacer"></span>
+  }
+  <span class="property">{{ node().label }}</span
+  ><span class="punctuation">:</span>
+  @if (isContainer()) {
+    <span class="container-value"
+      >{{ node().kind === 'object' ? '{' : '[' }} {{ node().children.length }}
+      {{ node().kind === 'object' ? 'keys' : 'items' }}
+      {{ node().kind === 'object' ? '}' : ']' }}</span
+    >
+  } @else {
+    <span class="scalar" [class]="'scalar ' + node().kind" [title]="raw()">{{ preview() }}</span>
+  }
+  @if (nested(); as decoded) {
+    <button
+      class="decode-button"
+      title="Inspect the JSON encoded inside this string"
+      (click)="inspectNested.emit(decoded)"
+    >
+      <ng-icon name="lucideBraces" size="12" />Decode
+    </button>
+  }
+</div>
+@if (isContainer() && isExpanded()) {
+  @for (child of node().children; track $index) {
+    <app-json-tree
+      [node]="child"
+      [source]="source()"
+      [depth]="depth() + 1"
+      (inspectNested)="inspectNested.emit($event)"
+    />
+  }
+}

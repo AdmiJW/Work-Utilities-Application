@@ -1,0 +1,273 @@
+<header class="tool-toolbar">
+  <div class="tool-heading">
+    <span class="tool-emblem"><ng-icon name="lucideTableProperties" size="18" /></span>
+    <div>
+      <h1 [title]="name()">{{ name() }}</h1>
+    </div>
+  </div>
+  <div class="toolbar-actions">
+    @if (runtime().analyzing()) {
+      <p-button
+        size="small"
+        severity="secondary"
+        [outlined]="true"
+        (onClick)="tasks.cancel(sessionId())"
+        ><ng-icon name="lucideX" />Cancel</p-button
+      >
+    }
+    <p-button
+      size="small"
+      severity="secondary"
+      [outlined]="true"
+      [disabled]="!source().trim() || runtime().analyzing()"
+      (onClick)="tasks.analyze(sessionId())"
+      ><ng-icon name="lucidePlay" />{{
+        runtime().analyzing() ? 'Analyzing ' + runtime().progress() + '%' : 'Analyze output'
+      }}</p-button
+    >
+    <p-button size="small" [disabled]="!canExport()" (onClick)="tasks.export(sessionId())"
+      ><ng-icon name="lucideDownload" />{{
+        runtime().exporting() ? 'Building workbook…' : 'Export Excel'
+      }}</p-button
+    >
+  </div>
+</header>
+@if (runtime().error()) {
+  <div class="notice error" role="alert">{{ runtime().error() }}</div>
+}
+@if (stale()) {
+  <div class="notice" role="status">
+    Input changed. Analyze again to refresh these results and enable export.
+  </div>
+}
+<section class="source-section" appFileDrop (filesDropped)="openFiles($event)">
+  <div class="source-heading">
+    <button
+      class="source-toggle"
+      [attr.aria-expanded]="!inputCollapsed()"
+      aria-controls="output-source"
+      (click)="toggleInput()"
+    >
+      <ng-icon
+        [name]="inputCollapsed() ? 'lucideChevronRight' : 'lucideChevronDown'"
+        size="14"
+      /><span class="eyebrow">Source output</span></button
+    ><span class="source-size mono">{{ source().length.toLocaleString() }} characters</span
+    ><input
+      #txtFile
+      type="file"
+      accept=".txt,text/plain"
+      hidden
+      (change)="importFile($event)"
+    /><p-button
+      size="small"
+      severity="secondary"
+      [text]="true"
+      [disabled]="imports.state.reading()"
+      (onClick)="rememberSelection(); txtFile.click()"
+      ><ng-icon name="lucideFileUp" size="14" />Open TXT</p-button
+    >
+  </div>
+  @if (!inputCollapsed()) {
+    <textarea
+      #sourceInput
+      id="output-source"
+      aria-label="Execution output"
+      class="source-input mono"
+      placeholder="Paste execution output here, or open a TXT file…"
+      [value]="source()"
+      (input)="sourceChanged($event)"
+      (select)="rememberSelection()"
+      (keyup)="rememberSelection()"
+      (click)="rememberSelection()"
+      (blur)="rememberSelection()"
+      spellcheck="false"
+      wrap="off"
+    ></textarea>
+  }
+</section>
+@if (runtime().analyzing()) {
+  <div
+    class="analysis-progress"
+    role="progressbar"
+    aria-label="Output analysis progress"
+    aria-valuemin="0"
+    aria-valuemax="100"
+    [attr.aria-valuenow]="runtime().progress()"
+  >
+    <div [style.width.%]="runtime().progress()"></div>
+  </div>
+}
+@if (result(); as analysis) {
+  <div class="sheet-tabs" role="tablist" aria-label="Result sheets">
+    @for (statement of selectStatements(); track statement.index) {
+      <button
+        role="tab"
+        [attr.aria-selected]="runtime().selectedSheet() === '' + statement.index"
+        [class.active]="runtime().selectedSheet() === '' + statement.index"
+        (click)="selectSheet('' + statement.index)"
+      >
+        <ng-icon name="lucideTableProperties" size="13" /><span
+          >{{ statement.index }}. {{ statement.tableName }}</span
+        ><span class="sheet-count">{{ statement.rows.length.toLocaleString() }}</span>
+      </button>
+    }
+    @if (hasSummaries()) {
+      <button
+        role="tab"
+        [attr.aria-selected]="runtime().selectedSheet() === 'summary'"
+        [class.active]="runtime().selectedSheet() === 'summary'"
+        (click)="selectSheet('summary')"
+      >
+        <ng-icon name="lucideFileText" size="13" />Statements
+      </button>
+    }
+    @if (analysis.diagnostics.length) {
+      <button
+        role="tab"
+        [attr.aria-selected]="runtime().selectedSheet() === 'diagnostics'"
+        [class.active]="runtime().selectedSheet() === 'diagnostics'"
+        (click)="selectSheet('diagnostics')"
+      >
+        <ng-icon name="lucideTriangleAlert" size="13" />Diagnostics<span class="sheet-count">{{
+          analysis.diagnostics.length
+        }}</span>
+      </button>
+    }
+  </div>
+  <div
+    class="results-stage"
+    [class.with-inspector]="runtime().inspectorOpen()"
+    [style.grid-template-columns]="
+      runtime().inspectorOpen()
+        ? 'minmax(0, 1fr) 5px ' + layout.width() + 'px'
+        : 'minmax(0, 1fr) 30px'
+    "
+  >
+    <div class="sheet-main" role="tabpanel" aria-label="Selected result sheet">
+      @for (statement of activeStatements(); track statement) {
+        <div class="statement-info">
+          <div class="statement-label">
+            <span class="eyebrow">SQL statement</span
+            ><span class="statement-counts"
+              >{{ statement.rows.length.toLocaleString() }} parsed /
+              {{ statement.observedRows.toLocaleString() }} observed rows ·
+              {{ statement.columns.length }} columns</span
+            ><button
+              class="icon-button"
+              title="Copy SQL statement"
+              aria-label="Copy SQL statement"
+              (click)="copySql(statement.sql)"
+            >
+              <ng-icon name="lucideCopy" size="13" />
+            </button>
+          </div>
+          <pre class="sql-text mono">{{ statement.sql }}</pre>
+        </div>
+        @if (statement.columns.length) {
+          <div class="grid-area">
+            <app-result-grid
+              [statement]="statement"
+              [dark]="appearance.isDark()"
+              [savedView]="gridView(statement.index)"
+              (cellSelected)="runtime().selectedCell.set($event)"
+              (inspectCell)="runtime().inspectorOpen.set(true)"
+              (viewChanged)="saveGridView($event)"
+            />
+          </div>
+        } @else {
+          <div class="no-projection">
+            This SELECT’s projection could not be recovered. Its raw results are preserved in
+            Diagnostics.
+          </div>
+        }
+      }
+      @if (runtime().selectedSheet() === 'diagnostics') {
+        <app-analysis-diagnostics [diagnostics]="analysis.diagnostics" />
+      }
+      @if (runtime().selectedSheet() === 'summary') {
+        <app-analysis-diagnostics mode="summary" [statements]="analysis.statements" />
+      }
+    </div>
+    @if (runtime().inspectorOpen()) {
+      <div
+        class="inspector-resizer"
+        role="separator"
+        tabindex="0"
+        aria-label="Resize cell inspector"
+        aria-orientation="vertical"
+        aria-valuemin="280"
+        aria-valuemax="650"
+        [attr.aria-valuenow]="layout.width()"
+        (pointerdown)="layout.beginResize($event)"
+        (keydown)="layout.resizeWithKey($event)"
+      ></div>
+      @if (runtime().selectedCell(); as cell) {
+        <app-cell-inspector
+          [cell]="cell"
+          [decodeMode]="decodeMode()"
+          (decodeModeChange)="sessions.updateOptions(sessionId(), { jsonDecodeMode: $event })"
+          (closed)="runtime().inspectorOpen.set(false)"
+        />
+      } @else {
+        <aside class="inspector-placeholder">
+          <button
+            class="icon-button"
+            aria-label="Close cell inspector"
+            (click)="runtime().inspectorOpen.set(false)"
+          >
+            <ng-icon name="lucideX" />
+          </button>
+          <p>Select a cell to inspect its value.</p>
+        </aside>
+      }
+    } @else {
+      <div class="inspector-rail">
+        <button
+          class="icon-button"
+          aria-label="Open cell inspector"
+          title="Open cell inspector"
+          (click)="runtime().inspectorOpen.set(true)"
+        >
+          <ng-icon name="lucidePanelRightOpen" size="16" />
+        </button>
+      </div>
+    }
+  </div>
+} @else {
+  <div class="analyzer-empty">
+    <span class="empty-icon"><ng-icon name="lucideClipboardList" size="29" /></span>
+    <h2>Give your output some structure.</h2>
+    <p>
+      Paste or open a TXT file, then analyze it to create result sheets.<br />Double-click a cell to
+      inspect its exact value and explore JSON.
+    </p>
+    <code class="mono">SQL Statement Run: --123SELECT CONCAT(...)</code>
+  </div>
+}
+<p-dialog
+  header="Workbook export needs attention"
+  closeAriaLabel="Close export issues"
+  [visible]="runtime().exportIssues().length > 0"
+  (visibleChange)="!$event && runtime().exportIssues.set([])"
+  [modal]="true"
+  [style]="{ width: '650px' }"
+  ><p class="export-explanation">
+    Excel cannot hold these values without losing data. The full content remains available in the
+    app; nothing has been truncated.
+  </p>
+  <div class="export-issues">
+    @for (issue of runtime().exportIssues(); track $index) {
+      <div>
+        <strong>{{ issue.sheet }} · row {{ issue.row }}, column {{ issue.column }}</strong>
+        <p>{{ issue.message }}</p>
+      </div>
+    }
+  </div></p-dialog
+>
+<app-file-import-dialog
+  [fileName]="imports.state.pending()?.fileName ?? null"
+  [error]="imports.state.error()"
+  (decision)="decideImport($event)"
+  (dismissError)="imports.state.error.set('')"
+/>

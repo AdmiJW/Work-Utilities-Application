@@ -1,0 +1,146 @@
+﻿<p-dialog
+  header="Session library"
+  closeAriaLabel="Close session library"
+  [visible]="visible()"
+  (visibleChange)="visible.set($event)"
+  [modal]="true"
+  [style]="{ width: '740px' }"
+>
+  @if (sessions.openingError()) {
+    <p class="notice error" role="alert">
+      {{ sessions.openingError() }} Select the session again to retry.
+    </p>
+  }
+  <label class="search-box"
+    ><ng-icon name="lucideSearch" size="16" /><input
+      aria-label="Find a saved session"
+      placeholder="Find a session…"
+      [value]="search()"
+      (input)="search.set($any($event.target).value)"
+  /></label>
+  <div class="library-toolbar">
+    <div class="select-all">
+      <p-checkbox
+        [binary]="true"
+        [ngModel]="allSelected()"
+        [indeterminate]="partiallySelected()"
+        [appIndeterminateCheckbox]="partiallySelected()"
+        inputId="select-all-sessions"
+        (onChange)="toggleAll()"
+      /><label for="select-all-sessions">Select all</label>
+    </div>
+    <div class="sort-toggle" role="group" aria-label="Sort sessions">
+      <button
+        [class.active]="sort() === 'date'"
+        [attr.aria-pressed]="sort() === 'date'"
+        (click)="setSort('date')"
+      >
+        <ng-icon name="lucideCalendarDays" size="13" />Date
+      </button>
+      <button
+        [class.active]="sort() === 'name'"
+        [attr.aria-pressed]="sort() === 'name'"
+        (click)="setSort('name')"
+      >
+        <ng-icon name="lucideArrowDownAZ" size="13" />Name
+      </button>
+    </div>
+    <p-button
+      size="small"
+      severity="danger"
+      [text]="true"
+      [disabled]="selected().size === 0"
+      (onClick)="deleteTargets.set(selectedIds())"
+      ><ng-icon name="lucideTrash2" size="14" />Delete selected ({{ selected().size }})</p-button
+    >
+  </div>
+  <div class="session-list">
+    @for (session of filtered(); track session.id) {
+      <div class="saved-session">
+        <p-checkbox
+          [binary]="true"
+          [ngModel]="selected().has(session.id)"
+          [ariaLabel]="'Select ' + session.name"
+          (onChange)="toggle(session.id)"
+        />
+        <span class="session-icon"
+          ><ng-icon
+            [name]="session.toolId === 'sql-formatter' ? 'lucideCodeXml' : 'lucideTableProperties'"
+            size="18"
+        /></span>
+        <div class="saved-details">
+          <strong>{{ session.name }}</strong>
+          <div class="saved-meta">
+            <p-tag
+              [value]="session.isOpen ? 'Open' : 'Closed'"
+              [severity]="session.isOpen ? 'success' : 'secondary'"
+            /><small>{{ updatedAt(session.updatedAt) }}</small>
+          </div>
+        </div>
+        <p-button size="small" severity="secondary" [text]="true" (onClick)="reopen(session.id)"
+          >{{ session.isOpen ? 'Go to tab' : 'Reopen'
+          }}<ng-icon name="lucideArrowUpRight" size="14"
+        /></p-button>
+        <button
+          class="icon-button"
+          [attr.aria-label]="'Delete ' + session.name"
+          title="Permanently delete session"
+          (click)="deleteTargets.set([session.id])"
+        >
+          <ng-icon name="lucideTrash2" size="16" />
+        </button>
+      </div>
+    } @empty {
+      <div class="empty-library">
+        <ng-icon name="lucideFolderOpen" size="28" />
+        <p>{{ search() ? 'No matching sessions.' : 'Your saved sessions will appear here.' }}</p>
+      </div>
+    }
+  </div>
+  @if (offline.supported) {
+    <div class="library-settings">
+      <p-button
+        size="small"
+        severity="secondary"
+        [text]="true"
+        [disabled]="!offline.online()"
+        (onClick)="offline.checkForUpdate()"
+        >Check for updates</p-button
+      >
+    </div>
+  }
+</p-dialog>
+<p-dialog
+  header="Delete saved sessions?"
+  closeAriaLabel="Cancel deletion"
+  [visible]="deleteTargets().length > 0"
+  (visibleChange)="!$event && deleteTargets.set([])"
+  [modal]="true"
+  [closable]="!deleting()"
+  [closeOnEscape]="!deleting()"
+  [style]="{ width: '460px' }"
+>
+  <p class="delete-message">
+    Permanently delete {{ deleteTargets().length }} selected session(s) and their browser autosaves?
+  </p>
+  @if (deletingOpenCount()) {
+    <p class="delete-message">
+      <strong>{{ deletingOpenCount() }} open tab(s) will also close.</strong>
+    </p>
+  }
+  @if (sessions.error()) {
+    <div class="notice error" role="alert">{{ sessions.error() }}</div>
+  }
+  <div class="dialog-actions">
+    <p-button
+      size="small"
+      severity="secondary"
+      [outlined]="true"
+      [disabled]="deleting()"
+      (onClick)="deleteTargets.set([])"
+      >Cancel</p-button
+    ><p-button size="small" severity="danger" [loading]="deleting()" (onClick)="deleteSelected()"
+      >Delete sessions</p-button
+    >
+  </div>
+</p-dialog>
